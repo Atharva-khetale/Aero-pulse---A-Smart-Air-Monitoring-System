@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Daily Advice{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-icon">🌬️</div>
+    AERO INTELLIGENCE
+  </div>
+  <div class="topbar-right">
+    <div class="avatar">{{ user.name[0].upper() if user else 'U' }}</div>
+  </div>
+</div>
+
+<div class="screen-content" id="advice-content">
+
+  <h1 class="screen-title slide-up">Your Daily Advice</h1>
+  <p class="screen-sub slide-up delay-1">Personalized insights based on current atmospheric conditions.</p>
+
+  <div id="recs-container">
+    <!-- Injected by JS -->
+    <div style="text-align:center;padding:40px 0;">
+      <div class="spinner" style="margin:0 auto 16px;"></div>
+      <div style="font-size:13px;color:var(--muted);">Analyzing conditions…</div>
+    </div>
+  </div>
+
+  <!-- Pro Tip -->
+  <div class="pro-tip slide-up" id="pro-tip" style="display:none;">
+    <span style="font-size:18px;">💡</span>
+    <span id="pro-tip-text">Ventilation is key between 5 AM and 7 AM.</span>
+    <a href="#" style="margin-left:auto;color:var(--primary);font-weight:700;font-size:14px;">→</a>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a href="/dashboard" class="nav-btn"><span class="icon">⊞</span>LIVE</a>
+  <a href="/predict"   class="nav-btn"><span class="icon">↗</span>PREDICT</a>
+  <a href="/advice"    class="nav-btn active"><span class="icon">✦</span>ADVICE</a>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const PRO_TIPS = [
+  "Ventilation is key between 5 AM and 7 AM.",
+  "Indoor plants can reduce particulate matter by up to 20%.",
+  "MQ-135 spikes often precede visible haze by 15 minutes.",
+  "Keep humidity below 65% to inhibit mold growth.",
+  "Running an air purifier for 30 min refreshes a 20m² room.",
+];
+
+function buildCard(r) {
+  return `
+  <div class="rec-card slide-up" style="background:${r.bg};margin-bottom:14px;" data-animate="true">
+    <div class="rec-cat" style="color:${r.color};">
+      <div class="rec-cat-icon">${r.icon}</div>
+      ${r.category}
+    </div>
+    <div class="rec-title" style="color:${r.color};">${r.title}</div>
+    <div class="rec-body" style="color:${r.color};">${r.body}</div>
+    <div class="rec-actions">
+      <button class="rec-btn-primary" style="background:${r.color};color:#fff;">Check</button>
+      <button class="rec-btn-ghost" style="color:${r.color};" onclick="this.closest('.rec-card').style.opacity='0.3'">Dismiss</button>
+    </div>
+  </div>`;
+}
+
+function poll() {
+  fetch('/api/recommendations').then(r => r.json()).then(recs => {
+    const cont = document.getElementById('recs-container');
+    cont.innerHTML = recs.map(buildCard).join('');
+    document.getElementById('pro-tip').style.display = 'flex';
+    document.getElementById('pro-tip-text').textContent =
+      PRO_TIPS[Math.floor(Date.now() / 60000) % PRO_TIPS.length];
+  }).catch(() => {});
+}
+
+poll();
+setInterval(poll, 8000);
+</script>
+{% endblock %}

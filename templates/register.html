@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block content %}
+<div style="display:flex;flex-direction:column;min-height:100vh;padding:32px 28px;">
+  <div style="margin-bottom:28px;" class="slide-up">
+    <a href="/login" style="font-size:13px;color:var(--muted);font-weight:600;">← Back to Login</a>
+  </div>
+  <h1 class="screen-title slide-up delay-1">Create Account</h1>
+  <p class="screen-sub slide-up delay-2">Join SmartAir to monitor your environment</p>
+
+  <form method="POST" action="/register">
+    <div class="field-wrap slide-up delay-2">
+      <label class="field-label">Full Name</label>
+      <input class="neu-input" type="text" name="name" placeholder="Your name" required>
+    </div>
+    <div class="field-wrap slide-up delay-3">
+      <label class="field-label">Email</label>
+      <input class="neu-input" type="email" name="email" placeholder="you@example.com" required>
+    </div>
+    <div class="field-wrap slide-up delay-3">
+      <label class="field-label">Password</label>
+      <input class="neu-input" type="password" name="password" placeholder="Min 6 characters" required>
+    </div>
+    <div class="field-wrap slide-up delay-4">
+      <label class="field-label">Confirm Password</label>
+      <input class="neu-input" type="password" name="password2" placeholder="Repeat password" required>
+    </div>
+    {% if error %}
+    <p class="error-msg">{{ error }}</p>
+    {% endif %}
+    <div style="margin-top:20px;" class="slide-up delay-5">
+      <button class="btn-primary" type="submit">Register →</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

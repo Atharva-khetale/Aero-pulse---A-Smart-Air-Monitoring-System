@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}AI Prediction{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-icon">🌬️</div>
+    AERO INTELLIGENCE
+  </div>
+  <div class="topbar-right">
+    <span id="wifi-status" style="color:var(--muted);font-size:12px;">📶</span>
+  </div>
+</div>
+
+<div class="screen-content">
+
+  <h1 class="screen-title slide-up">Predictive Insights</h1>
+  <p class="screen-sub slide-up delay-1">Real-time machine learning projecting the future of your local atmosphere.</p>
+
+  <!-- Prediction Hero Card -->
+  <div class="neu-card slide-up delay-2" id="pred-card" style="background:#fef3c7;padding:24px;">
+    <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:#92400e;text-transform:uppercase;margin-bottom:8px;">FUTURE PROJECTION</div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+      <span id="pred-val" style="font-size:56px;font-weight:800;line-height:1;color:#78350f;">--</span>
+      <span style="font-size:18px;font-weight:600;color:#92400e;">AQI</span>
+    </div>
+    <div id="pred-badge" style="display:inline-block;padding:5px 14px;border-radius:50px;background:#92400e;color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">LOADING</div>
+    <div id="pred-sub" style="font-size:13px;font-weight:600;color:#92400e;">Predicted AQI in 30m: --</div>
+  </div>
+
+  <!-- Trend Chart Card -->
+  <div class="neu-card slide-up delay-3">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-size:15px;font-weight:700;">30-Minute Trend</div>
+      <span style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--good);">● LIVE PROJECTION</span>
+    </div>
+    <canvas id="trend-chart" width="360" height="140" style="width:100%;border-radius:12px;"></canvas>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:var(--muted);font-weight:600;">
+      <span>NOW</span><span>+15M</span><span>+30M</span>
+    </div>
+  </div>
+
+  <!-- Intelligent Synthesis Card -->
+  <div class="neu-card slide-up delay-4" style="display:flex;gap:14px;align-items:flex-start;">
+    <div style="width:42px;height:42px;border-radius:14px;background:rgba(0,105,92,0.08);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:var(--shadow-neu-out);">🧠</div>
+    <div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Intelligent Synthesis</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;" id="algo-text">
+        Based on your local sensor data and ML analysis. Our models incorporate wind velocity, humidity fluctuations, and historical patterns to generate this forecast.
+      </div>
+    </div>
+  </div>
+
+  <!-- Re-run Model Button -->
+  <button class="btn-primary slide-up delay-5" onclick="reRunModel()" id="rerun-btn" style="margin-bottom:10px;">
+    ↺ &nbsp; RE-RUN MODEL
+  </button>
+  <div id="last-updated" style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:16px;">LAST UPDATED: just now</div>
+
+  <!-- Spatial Intelligence Card -->
+  <div class="neu-card slide-up delay-5" style="background:linear-gradient(135deg,#004d40,#00695c);color:#fff;padding:24px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:rgba(97,244,216,0.12);"></div>
+    <div style="position:absolute;bottom:-30px;left:-10px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:8px;position:relative;">Spatial Intelligence</div>
+    <div style="font-size:12px;line-height:1.7;opacity:0.85;position:relative;">
+      SmartAir maps your sensor data across ML dimensions to ensure predictions are hyper-local and model-accurate.
+    </div>
+    <div id="model-meta" style="margin-top:12px;font-size:10px;opacity:0.6;font-family:'DM Mono',monospace;"></div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a href="/dashboard" class="nav-btn"><span class="icon">⊞</span>LIVE</a>
+  <a href="/predict"   class="nav-btn active"><span class="icon">↗</span>PREDICT</a>
+  <a href="/advice"    class="nav-btn"><span class="icon">✦</span>ADVICE</a>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const AQI_COLORS = {
+  Good:['#f59e0b','#fef3c7','#92400e'], Moderate:['#f97316','#ffedd5','#9a3412'],
+  Sensitive:['#ef4444','#fee2e2','#7f1d1d'], Unhealthy:['#dc2626','#fee2e2','#7f1d1d'],
+  'Very Unhealthy':['#7c3aed','#ede9fe','#4c1d95'], Hazardous:['#7f1d1d','#fecaca','#450a0a'],
+};
+let chartData = [];
+
+function drawChart(history, pred) {
+  const canvas = document.getElementById('trend-chart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (!history || history.length < 2) return;
+  const all = [...history, pred];
+  const mx = Math.max(...all, 1);
+  const mn = Math.min(...all, 0);
+  const range = mx - mn || 1;
+
+  const pad = {l:20, r:20, t:16, b:20};
+  const w = W - pad.l - pad.r;
+  const h = H - pad.t - pad.b;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.05)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + h * (i / 4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+  }
+
+  const getX = i => pad.l + (i / (all.length - 1)) * w;
+  const getY = v => pad.t + h - ((v - mn) / range * h);
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, pad.t, 0, H);
+  grad.addColorStop(0, 'rgba(0,105,92,0.18)');
+  grad.addColorStop(1, 'rgba(0,105,92,0.01)');
+  ctx.beginPath();
+  ctx.moveTo(getX(0), getY(history[0]));
+  history.forEach((v, i) => { if (i > 0) ctx.lineTo(getX(i), getY(v)); });
+  ctx.lineTo(getX(history.length-1), H - pad.b);
+  ctx.lineTo(pad.l, H - pad.b);
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Main line
+  ctx.beginPath();
+  ctx.moveTo(getX(0), getY(history[0]));
+  history.forEach((v, i) => { if (i > 0) ctx.lineTo(getX(i), getY(v)); });
+  ctx.strokeStyle = '#00695c'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+
+  // Prediction dashed line
+  const lastX = getX(history.length - 1);
+  const lastY = getY(history[history.length - 1]);
+  const predX = getX(all.length - 1);
+  const predY = getY(pred);
+  ctx.beginPath();
+  ctx.setLineDash([4, 4]);
+  ctx.moveTo(lastX, lastY); ctx.lineTo(predX, predY);
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Pred dot
+  ctx.beginPath();
+  ctx.arc(predX, predY, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#f59e0b'; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+}
+
+function poll() {
+  fetch('/api/predict').then(r => r.json()).then(d => {
+    const label = d.label || 'Moderate';
+    const colors = AQI_COLORS[label] || AQI_COLORS['Moderate'];
+    document.getElementById('pred-val').textContent = Math.round(d.predicted_aqi);
+    document.getElementById('pred-val').style.color = colors[2];
+    document.getElementById('pred-badge').textContent = label.toUpperCase();
+    document.getElementById('pred-badge').style.background = colors[2];
+    document.getElementById('pred-card').style.background = colors[1];
+    document.getElementById('pred-sub').textContent =
+      `Predicted AQI in 30m: ${Math.round(d.predicted_aqi)} (${label})`;
+    document.getElementById('pred-sub').style.color = colors[2];
+
+    const trendMap = {worsening:'↑ Worsening', improving:'↓ Improving', stable:'→ Stable'};
+    document.getElementById('algo-text').textContent =
+      `Trend: ${trendMap[d.trend] || 'Stable'} | Current AQI: ${Math.round(d.current_aqi)} → Predicted: ${Math.round(d.predicted_aqi)}. WLS regression + GBR ensemble, 450-step horizon.`;
+
+    drawChart(d.history, d.predicted_aqi);
+  }).catch(() => {});
+
+  fetch('/api/model_meta').then(r => r.json()).then(m => {
+    if (m.mae !== undefined) {
+      document.getElementById('model-meta').textContent =
+        `Model: ${m.source} | MAE: ${m.mae} | R²: ${m.r2} | Rows: ${m.rows}`;
+    }
+  }).catch(() => {});
+}
+
+function reRunModel() {
+  const btn = document.getElementById('rerun-btn');
+  btn.textContent = '⟳  Refreshing…';
+  btn.disabled = true;
+  setTimeout(() => {
+    poll();
+    btn.textContent = '↺  RE-RUN MODEL';
+    btn.disabled = false;
+    document.getElementById('last-updated').textContent = 'LAST UPDATED: just now';
+  }, 1200);
+}
+
+poll();
+setInterval(poll, 4000);
+</script>
+{% endblock %}

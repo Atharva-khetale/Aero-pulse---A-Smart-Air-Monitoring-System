@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+<style>
+  .auth-wrap { display: flex; flex-direction: column; min-height: 100vh; padding: 40px 28px 32px; }
+  .auth-logo { display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
+  .auth-logo-ring {
+    width: 90px; height: 90px; border-radius: 28px;
+    background: var(--bg);
+    box-shadow: var(--shadow-card);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px; position: relative; overflow: hidden;
+  }
+  .auth-logo-ring::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,105,92,0.06), rgba(97,244,216,0.15));
+  }
+  .auth-logo-icon { font-size: 40px; position: relative; z-index: 1; }
+  .auth-title { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; }
+  .auth-subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .auth-form { flex: 1; }
+  .auth-footer { text-align: center; margin-top: 20px; }
+</style>
+
+<div class="auth-wrap">
+  <div class="auth-logo slide-up">
+    <div class="auth-logo-ring">
+      <span class="auth-logo-icon">🌬️</span>
+    </div>
+    <div class="auth-title">SmartAir</div>
+    <div class="auth-subtitle">Atmospheric Intelligence</div>
+  </div>
+
+  <div class="auth-form">
+    <p class="screen-sub slide-up delay-1">Sign in to your account</p>
+
+    <form method="POST" action="/login">
+      <div class="field-wrap slide-up delay-2">
+        <label class="field-label">Email</label>
+        <input class="neu-input" type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+      </div>
+      <div class="field-wrap slide-up delay-3">
+        <label class="field-label">Password</label>
+        <input class="neu-input" type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      {% if error %}
+      <p class="error-msg slide-up">{{ error }}</p>
+      {% endif %}
+      <div class="slide-up delay-4" style="margin-top:16px;">
+        <button class="btn-primary" type="submit">Sign In →</button>
+      </div>
+    </form>
+
+    <div class="divider slide-up delay-5">— or —</div>
+    <a href="/register">
+      <button class="btn-secondary slide-up delay-5">Create Account</button>
+    </a>
+  </div>
+</div>
+{% endblock %}

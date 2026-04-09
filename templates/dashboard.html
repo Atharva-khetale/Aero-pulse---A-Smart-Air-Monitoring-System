@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Live Dashboard{% endblock %}
+{% block content %}
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-icon">🌬️</div>
+    AURA INTELLIGENCE
+  </div>
+  <div class="topbar-right">
+    <span class="wifi-icon" id="wifi-icon">📶</span>
+    {% if user %}
+    <div class="avatar" title="{{ user.name }}">{{ user.name[0].upper() }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Screen Content -->
+<div class="screen-content">
+
+  <!-- Connected Badge -->
+  <div style="margin-bottom:12px;" class="slide-up">
+    <span class="conn-badge offline" id="conn-badge">CONNECTING…</span>
+  </div>
+
+  <!-- AQI Ring Card -->
+  <div class="neu-card slide-up delay-1" style="text-align:center;padding:24px 20px 18px;">
+    <div class="aqi-ring-wrap">
+      <svg class="aqi-ring-svg" width="200" height="200" viewBox="0 0 200 200">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00695c"/>
+            <stop offset="100%" stop-color="#4ecdc4"/>
+          </linearGradient>
+        </defs>
+        <!-- Shadow -->
+        <circle cx="102" cy="102" r="80" fill="none" stroke="#c8ced2" stroke-width="12" opacity="0.5"/>
+        <!-- Light highlight -->
+        <circle cx="98" cy="98" r="80" fill="none" stroke="#ffffff" stroke-width="10" opacity="0.8"/>
+        <!-- BG ring -->
+        <circle cx="100" cy="100" r="80" fill="none" stroke="#dde2e5" stroke-width="10"/>
+        <!-- Progress ring -->
+        <circle id="aqi-ring" cx="100" cy="100" r="80" fill="none"
+                stroke="url(#ringGrad)" stroke-width="10"
+                stroke-linecap="round"
+                stroke-dasharray="502.65"
+                stroke-dashoffset="502.65"
+                transform="rotate(-90 100 100)"
+                style="transition: stroke-dashoffset 1s ease, stroke 0.5s;"/>
+        <!-- Center content -->
+        <text x="100" y="86" text-anchor="middle" fill="#6b7280" font-family="DM Sans" font-size="11" font-weight="700" letter-spacing="2">CURRENT AQI</text>
+        <text id="aqi-center" x="100" y="118" text-anchor="middle" fill="#00695c" font-family="DM Sans" font-size="52" font-weight="800">--</text>
+        <rect id="aqi-badge" x="62" y="128" width="76" height="24" rx="12" fill="#00695c"/>
+        <text id="aqi-badge-text" x="100" y="144" text-anchor="middle" fill="white" font-family="DM Sans" font-size="11" font-weight="700" letter-spacing="1">LOADING</text>
+      </svg>
+    </div>
+
+    <!-- AQI scale bar -->
+    <div class="aqi-scale"><div class="aqi-scale-bar"></div></div>
+    <div class="aqi-scale-labels">
+      <span>HEALTHY</span><span></span><span></span><span>HAZARDOUS</span>
+    </div>
+  </div>
+
+  <!-- Sensor Grid -->
+  <div class="sensor-grid">
+    <div class="sensor-card slide-up delay-2">
+      <div class="sensor-icon-wrap" style="background:rgba(0,105,92,0.08);">☁️</div>
+      <div class="sensor-label">MQ2</div>
+      <div class="sensor-value" id="mq2-val">--</div>
+      <div class="sensor-sub">Smoke & Gas</div>
+    </div>
+    <div class="sensor-card slide-up delay-2">
+      <div class="sensor-icon-wrap" style="background:rgba(78,205,196,0.12);">〜</div>
+      <div class="sensor-label">MQ135</div>
+      <div class="sensor-value" id="mq135-val">--</div>
+      <div class="sensor-sub">Air Quality</div>
+    </div>
+    <div class="sensor-card slide-up delay-3">
+      <div class="sensor-icon-wrap" style="background:rgba(245,158,11,0.12);">🌡️</div>
+      <div class="sensor-label">Temp</div>
+      <div class="sensor-value" id="temp-val" style="color:#92400e;">--</div>
+      <div class="sensor-sub">Room Temp</div>
+    </div>
+    <div class="sensor-card slide-up delay-3">
+      <div class="sensor-icon-wrap" style="background:rgba(99,102,241,0.10);">💧</div>
+      <div class="sensor-label">Humidity</div>
+      <div class="sensor-value" id="hum-val" style="color:#4338ca;">--</div>
+      <div class="sensor-sub">Relative</div>
+    </div>
+  </div>
+
+  <!-- Recommendations preview -->
+  <div class="neu-card slide-up delay-4" id="recs-preview" style="background:linear-gradient(135deg,#00695c,#004d40);color:#fff;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;margin-bottom:8px;opacity:0.8;">CURRENT RECOMMENDATIONS</div>
+    <div id="recs-preview-text" style="font-size:14px;line-height:1.6;margin-bottom:14px;opacity:0.9;">Loading air quality assessment…</div>
+    <a href="/advice">
+      <button style="padding:9px 20px;border-radius:50px;border:1.5px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.5px;">VIEW DETAILS</button>
+    </a>
+  </div>
+
+  <!-- User bar -->
+  <div class="neu-card slide-up delay-5" style="display:flex;align-items:center;gap:12px;padding:14px 18px;">
+    <div class="avatar" style="flex-shrink:0;">{{ user.name[0].upper() if user else 'U' }}</div>
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:14px;">Hello, {{ user.name if user else 'User' }}!</div>
+      <div style="font-size:11px;color:var(--muted);">{{ user.email if user else '' }}</div>
+    </div>
+    <a href="/logout"><button class="btn-ghost" style="color:var(--error);font-size:12px;">Sign Out</button></a>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <a href="/dashboard" class="nav-btn active">
+    <span class="icon">⊞</span>LIVE
+  </a>
+  <a href="/predict" class="nav-btn">
+    <span class="icon">↗</span>PREDICT
+  </a>
+  <a href="/advice" class="nav-btn">
+    <span class="icon">✦</span>ADVICE
+  </a>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const AQI_COLORS = {
+  Good:          ['#10b981','#d1fae5'],
+  Moderate:      ['#f59e0b','#fef3c7'],
+  Sensitive:     ['#f97316','#ffedd5'],
+  Unhealthy:     ['#ef4444','#fee2e2'],
+  'Very Unhealthy': ['#7c3aed','#ede9fe'],
+  Hazardous:     ['#7f1d1d','#fecaca'],
+};
+
+function updateRing(aqi, label) {
+  const circ = 2 * Math.PI * 80;
+  const frac = Math.min(aqi / 500, 1);
+  const offset = circ * (1 - frac);
+  const ring = document.getElementById('aqi-ring');
+  const colors = AQI_COLORS[label] || ['#10b981','#d1fae5'];
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = colors[0];
+  document.getElementById('aqi-center').textContent = Math.round(aqi);
+  document.getElementById('aqi-center').setAttribute('fill', colors[0]);
+  document.getElementById('aqi-badge').setAttribute('fill', colors[0]);
+  document.getElementById('aqi-badge-text').textContent = label.toUpperCase();
+}
+
+function poll() {
+  fetch('/api/data').then(r => r.json()).then(d => {
+    document.getElementById('mq2-val').textContent = d.mq2;
+    document.getElementById('mq135-val').textContent = d.mq135;
+    document.getElementById('temp-val').textContent = d.temperature + '°C';
+    document.getElementById('hum-val').textContent = d.humidity + '%';
+    updateRing(d.aqi, d.aqi_label);
+    const badge = document.getElementById('conn-badge');
+    if (d.connected) {
+      badge.textContent = '● CONNECTED TO ESP DEVICE';
+      badge.className = 'conn-badge live';
+    } else {
+      badge.textContent = '○ DEMO MODE (ESP offline)';
+      badge.className = 'conn-badge offline';
+    }
+  }).catch(() => {});
+
+  fetch('/api/recommendations').then(r => r.json()).then(recs => {
+    if (recs.length > 0) {
+      const r = recs[0];
+      document.getElementById('recs-preview-text').textContent =
+        r.title + '. ' + r.body;
+    }
+  }).catch(() => {});
+}
+
+poll();
+setInterval(poll, 4000);
+</script>
+{% endblock %}
